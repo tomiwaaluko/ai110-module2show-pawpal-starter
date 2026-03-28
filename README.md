@@ -79,6 +79,8 @@ The two-layer design keeps `pawpal_system.py` fully testable without a browser. 
 
 ## Class Diagram
 
+![PawPal+ UML Class Diagram](uml_final.png)
+
 ```mermaid
 classDiagram
     direction TB
