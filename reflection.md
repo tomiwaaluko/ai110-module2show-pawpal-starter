@@ -88,3 +88,25 @@ Copilot generated a working solution but used a nested for-loop approach with an
 Claude generated the same recurrence logic but kept it on Task.mark_complete() as a pure function returning a new Task, with the Scheduler responsible only for finding the task and routing the result. This is more modular: Task knows how to clone itself for recurrence, Scheduler knows where to put the clone.
 
 **Verdict**: Claude's version was more "Pythonic" in the sense that it respected single responsibility more cleanly. Copilot's version was slightly more readable at first glance (fewer hops to follow), but would have caused maintenance issues when adding persistence — you'd have to serialize two separate collections instead of one.
+
+---
+
+## 2b. Algorithmic Tradeoffs
+
+The conflict detection algorithm checks for exact time string matches (e.g., "14:00" == "14:00"). This is a deliberate simplification — real scheduling would compare time ranges and durations. The tradeoff: exact match is O(n²) but simple to read, debug, and explain. Duration-overlap detection would require storing end times or durations on each Task, which adds complexity that wasn't worth it for this scope. If PawPal+ needed to schedule groomers or walkers across multiple households, duration-aware conflict detection would become necessary.
+
+---
+
+## AI Strategy Reflection
+
+**Which Copilot features were most effective?**
+Agent Mode was the highest-leverage feature for this project. Being able to say "implement all four Scheduler methods based on the UML I showed you" and have it touch multiple files in one pass saved significant time compared to inline completions. Inline Chat was useful for targeted questions like "how should I sort HH:MM strings" without losing context. Separate chat sessions per phase prevented the context from mixing — keeping the algorithmic planning session separate from the implementation session meant the suggestions stayed relevant.
+
+**One AI suggestion I rejected:**
+Copilot suggested implementing conflict detection using a `defaultdict(list)` to group tasks by time, then flagging groups with length > 1. This is cleaner algorithmically (O(n) grouping vs O(n²) comparison), but the output was a dict of time → [tasks] which required extra unpacking logic. I kept the O(n²) approach because the output was already a list of warning strings that could go directly into `st.warning()` calls — no intermediate transformation needed. For a pet owner with under 20 tasks per day, O(n²) is invisible.
+
+**Separate chat sessions:**
+Using a fresh chat per phase kept suggestions contextually relevant. The UML session produced cleaner diagrams because Copilot wasn't also trying to remember implementation details. The testing session produced more useful edge cases because I could prompt "assume the implementation is complete and correct — what would break it?" without the model trying to fix my code at the same time.
+
+**Lead architect lessons:**
+The most important lesson was that AI is excellent at generating options and terrible at deciding between them. Every time Copilot offered two approaches, the decision about which to use required understanding the downstream consequences — what's easier to serialize, what's easier to test, what's easier to explain to a grader. That judgment is irreducibly human. AI accelerated the typing; I provided the architecture.

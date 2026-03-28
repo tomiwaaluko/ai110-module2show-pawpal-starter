@@ -81,43 +81,50 @@ The two-layer design keeps `pawpal_system.py` fully testable without a browser. 
 
 ```mermaid
 classDiagram
+    direction TB
+
     class Task {
+        <<dataclass>>
         +str description
         +str time
         +str frequency
         +bool completed
         +date due_date
         +str priority
-        +mark_complete() Task|None
-    }
-    class Pet {
-        +str name
-        +str species
-        +list tasks
-        +add_task(task)
-        +task_count() int
-    }
-    class Owner {
-        +str name
-        +list pets
-        +add_pet(pet)
-        +get_pets() list
-        +save_to_json(filepath)
-        +load_from_json(filepath) Owner
-    }
-    class Scheduler {
-        +Owner owner
-        +get_all_tasks() list
-        +sort_by_time() list
-        +filter_tasks(pet_name, completed) list
-        +detect_conflicts() list
-        +mark_task_complete(pet_name, description)
-        +get_today_schedule() list
-        +find_next_available_slot(pet_name) str
-        +sort_by_priority_then_time() list
+        +mark_complete() Task | None
     }
 
-    Owner "1" --> "many" Pet : has
-    Pet "1" --> "many" Task : has
-    Scheduler "1" --> "1" Owner : uses
+    class Pet {
+        <<dataclass>>
+        +str name
+        +str species
+        +list~Task~ tasks
+        +add_task(task: Task) None
+        +task_count() int
+    }
+
+    class Owner {
+        +str name
+        +list~Pet~ pets
+        +add_pet(pet: Pet) None
+        +get_pets() list~Pet~
+        +save_to_json(filepath: str) None
+        +load_from_json(filepath: str)$ Owner
+    }
+
+    class Scheduler {
+        +Owner owner
+        +get_all_tasks() list~tuple~
+        +sort_by_time() list~tuple~
+        +filter_tasks(pet_name, completed) list~tuple~
+        +detect_conflicts() list~str~
+        +mark_task_complete(pet_name, description) None
+        +get_today_schedule() list~tuple~
+        +find_next_available_slot(pet_name, duration_minutes) str
+        +sort_by_priority_then_time() list~tuple~
+    }
+
+    Owner "1" *-- "0..*" Pet : owns
+    Pet "1" *-- "0..*" Task : schedules
+    Scheduler "1" --> "1" Owner : drives
 ```
